@@ -9,6 +9,21 @@ from reportlab.pdfgen import canvas
 from reportlab.graphics import renderPDF
 from textwrap import wrap
 
+def is_number(s):
+    try:
+        float(s)
+        return True
+    except ValueError:
+        pass
+ 
+    try:
+        import unicodedata
+        unicodedata.numeric(s)
+        return True
+    except (TypeError, ValueError):
+        pass
+    return False
+
 def splitCode(string, length=4):
     return ' '.join(string[i:i+length] for i in xrange(0,len(string),length))
 
@@ -40,9 +55,9 @@ def main(argv):
             print row
 
             brand = row[0]
-            barcode_value = row[1]
-            pin = row[2]
-            value = float(row[3])
+            barcode_value = row[2]
+            pin = row[3]
+            value = row[1]
 
             dimX = codeWidth
             dimY = pageHeight - codeHeight*j - (bufferY*j)
@@ -55,7 +70,11 @@ def main(argv):
             # drawOn puts the barcode on the canvas at the specified coordinates
             barcode.drawOn(c, dimX, dimY)
 
-            c.drawString(dimX + barcode.width + bufferX, dimY + 2*c._leading, '{0}: ${1:.2f}'.format(brand, value))
+            if is_number(value):
+                c.drawString(dimX + barcode.width + bufferX, dimY + 2*c._leading, '{0}: ${1:.2f}'.format(brand, float(value)))
+            else:
+                c.drawString(dimX + barcode.width + bufferX, dimY + 2*c._leading, '{0}'.format(brand))
+
             c.drawString(dimX + barcode.width + bufferX, dimY + c._leading, 'Code: {0}'.format(splitCode(barcode_value)))
             c.drawString(dimX + barcode.width + bufferX, dimY, 'PIN: {0}'.format(pin))
 
